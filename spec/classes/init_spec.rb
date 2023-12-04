@@ -45,28 +45,6 @@ describe 'nfs' do
       service_enable:  false,
       server:          true,
     },
-    'solaris10' => {
-      osfamily:        'Solaris',
-      kernelrelease:   '5.10',
-      include_idmap:   false,
-      include_rpcbind: false,
-      packages:        ['SUNWnfsckr', 'SUNWnfscr', 'SUNWnfscu', 'SUNWnfsskr', 'SUNWnfssr', 'SUNWnfssu'],
-      service:         'nfs/client',
-      service_ensure:  'running',
-      service_enable:  true,
-      server:          false,
-    },
-    'solaris11' => {
-      osfamily:        'Solaris',
-      kernelrelease:   '5.11',
-      include_idmap:   false,
-      include_rpcbind: false,
-      packages:        ['service/file-system/nfs', 'system/file-system/nfs'],
-      service:         'nfs/client',
-      service_ensure:  'running',
-      service_enable:  true,
-      server:          false,
-    },
     'suse11' => {
       osfamily:        'Suse',
       release:         '11',
@@ -96,7 +74,6 @@ describe 'nfs' do
     'el10'     => { osfamily:  'RedHat',  release: '10' },
     'suse9'    => { osfamily:  'Suse',    release: '9' },
     'suse13'   => { osfamily:  'Suse',    release: '13' },
-    'solaris9' => { osfamily:  'Solaris', kernelrelease: '5.9' },
     'weirdos'  => { osfamily:  'WeirdOS', release: '2.4.2' },
   }
 

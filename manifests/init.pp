@@ -72,37 +72,6 @@ class nfs (
         }
       }
     }
-    'Solaris': {
-      if $server == true {
-        fail('This platform is not configured to be an NFS server.')
-      }
-
-      $default_nfs_service = 'nfs/client'
-      $default_nfs_service_ensure = 'running'
-      $default_nfs_service_enable = true
-
-      case $facts['kernelrelease'] {
-        '5.10': {
-          $default_nfs_package = [
-            'SUNWnfsckr',
-            'SUNWnfscr',
-            'SUNWnfscu',
-            'SUNWnfsskr',
-            'SUNWnfssr',
-            'SUNWnfssu',
-          ]
-        }
-        '5.11': {
-          $default_nfs_package = [
-            'service/file-system/nfs',
-            'system/file-system/nfs',
-          ]
-        }
-        default: {
-          fail("nfs module only supports Solaris 5.10 and 5.11 and facts[kernelrelease] was detected as <${facts['kernelrelease']}>.")
-        }
-      }
-    }
     'Suse' : {
       if $server == true {
         fail('This platform is not configured to be an NFS server.')
@@ -125,7 +94,7 @@ class nfs (
     }
 
     default: {
-      fail("nfs module only supports osfamilies RedHat, Solaris and Suse, and <${facts['os']['family']}> was detected.")
+      fail("nfs module only supports osfamilies RedHat, Suse, and <${facts['os']['family']}> was detected.")
     }
   }
 
