@@ -69,14 +69,6 @@ describe 'nfs' do
     },
   }
 
-  unsupported_platforms = {
-    'el5'      => { osfamily:  'RedHat',  release: '5' },
-    'el10'     => { osfamily:  'RedHat',  release: '10' },
-    'suse9'    => { osfamily:  'Suse',    release: '9' },
-    'suse13'   => { osfamily:  'Suse',    release: '13' },
-    'weirdos'  => { osfamily:  'WeirdOS', release: '2.4.2' },
-  }
-
   supported_platforms.sort.each do |_k, v|
     describe "on osfamily <#{v[:osfamily]}> when #{v[:release].nil? ? 'kernel' : 'operatingsystemmaj'}release is <#{v[:release]}#{v[:kernelrelease]}>" do
       let :facts do
@@ -373,26 +365,6 @@ describe 'nfs' do
     end
   end
 
-  unsupported_platforms.sort.each do |_k, v|
-    describe "on unsupported [os][family] <#{v[:osfamily]}> when #{v[:release].nil? ? 'kernel' : '[os][release][major]'}release is <#{v[:release]}#{v[:kernelrelease]}>" do
-      let :facts do
-        {
-          os: {
-            family:  v[:osfamily],
-            release: {
-              major: v[:release],
-            },
-          },
-          kernelrelease:             v[:kernelrelease],
-        }
-      end
-
-      it 'fail' do
-        expect { is_expected.to contain_class(:subject) }.to raise_error(Puppet::Error, %r{nfs module only supports})
-      end
-    end
-  end
-
   describe 'variable type and content validations' do
     mandatory_params = {} if mandatory_params.nil?
 
@@ -425,7 +397,7 @@ describe 'nfs' do
         name:    ['nfs_service', 'exports_owner', 'exports_group'],
         valid:   ['string'],
         invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'expects a String value',
+        message: '(type Undef or String|expects a String value)',
       },
       'string for service enable' => {
         name:    ['nfs_service_enable'],

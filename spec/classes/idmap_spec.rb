@@ -43,13 +43,6 @@ describe 'nfs::idmap' do
     },
   }
 
-  unsupported_platforms = {
-    'el5'      => { osfamily: 'RedHat',  release: '5' },
-    'el10'     => { osfamily: 'RedHat',  release: '10' },
-    'solaris9' => { osfamily: 'Solaris', kernelrelease: '5.9' },
-    'weirdos'  => { osfamily: 'WeirdOS', release: '2.4.2' },
-  }
-
   supported_platforms.sort.each do |_k, v|
     describe "on osfamily <#{v[:osfamily]}> when operatingsystemmajrelease is <#{v[:release]}>" do
       let :facts do
@@ -149,11 +142,7 @@ describe 'nfs::idmap' do
       context 'with idmapd_service_name specified as valid string <idmapd-test>' do
         let(:params) { { idmapd_service_name: 'idmapd-test' } }
 
-        if os == 'RedHat'
-          it { is_expected.to contain_service('idmapd_service').with_name('idmapd-test') }
-        else
-          it { is_expected.not_to contain_service('idmapd_service') }
-        end
+        it { is_expected.to contain_service('idmapd_service').with_name('idmapd-test') }
       end
 
       context 'with idmapd_service_ensure specified as valid string <true>' do
@@ -270,26 +259,6 @@ describe 'nfs::idmap' do
     it { is_expected.to contain_file('idmapd_conf').with_content(%r{^Pipefs-Directory = /test/rpc_pipefs$}) }
   end
 
-  unsupported_platforms.sort.each do |_k, v|
-    describe "on unsupported osfamily <#{v[:osfamily]}> when #{v[:release].nil? ? 'kernel' : 'operatingsystemmaj'}release is <#{v[:release]}#{v[:kernelrelease]}>" do
-      let :facts do
-        {
-          os: {
-            family:      v[:osfamily],
-            release: {
-              major:     v[:release],
-            },
-          },
-          kernelrelease: v[:kernelrelease],
-        }
-      end
-
-      it 'fail' do
-        expect { is_expected.to contain_class(:subject) }.to raise_error(Puppet::Error, %r{idmap only supports})
-      end
-    end
-  end
-
   describe 'variable type and content validations' do
     mandatory_params = {} if mandatory_params.nil?
 
@@ -323,7 +292,7 @@ describe 'nfs::idmap' do
         name:    ['idmap_package', 'idmapd_conf_owner', 'idmapd_conf_group', 'idmapd_service_name', 'nobody_user', 'nobody_group'],
         valid:   ['string'],
         invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'expects a String value',
+        message: '(type Undef or String|expects a String value)',
       },
       'string/array' => {
         name:    ['local_realms'],
@@ -341,7 +310,7 @@ describe 'nfs::idmap' do
         name:    ['idmapd_service_ensure'],
         valid:   ['stopped', 'running', 'true', 'false'],
         invalid: ['string', ['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: '(expects a String value|valid values are stopped, running, true and false)',
+        message: '(type Undef or String|valid values are stopped, running, true and false)',
       },
       'string for mode' => {
         name:    ['idmapd_conf_mode'],

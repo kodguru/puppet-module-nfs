@@ -61,13 +61,13 @@
 #   String of the directory for rpc_pipefs.
 #
 class nfs::idmap (
-  String                 $idmap_package             = 'USE_DEFAULTS',
+  Optional[String]       $idmap_package             = undef,
   Stdlib::Absolutepath   $idmapd_conf_path          = '/etc/idmapd.conf',
   String                 $idmapd_conf_owner         = 'root',
   String                 $idmapd_conf_group         = 'root',
   Pattern[/^[0-7]{4}$/]  $idmapd_conf_mode          = '0644',
-  String                 $idmapd_service_name       = 'USE_DEFAULTS',
-  String                 $idmapd_service_ensure     = 'USE_DEFAULTS',
+  Optional[String]       $idmapd_service_name       = undef,
+  Optional[String]       $idmapd_service_ensure     = undef,
   Boolean                $idmapd_service_enable     = true,
   Boolean                $idmapd_service_hasstatus  = true,
   Boolean                $idmapd_service_hasrestart = true,
@@ -96,74 +96,12 @@ class nfs::idmap (
     }
   }
 
-  case $facts['os']['family'] {
-    'RedHat' : {
-      $default_pipefs_directory = undef
-
-      case $facts['os']['release']['major'] {
-        '6': {
-          $default_idmap_service = 'rpcidmapd'
-          $default_idmap_package = 'nfs-utils-lib'
-          $default_idmapd_service_ensure = 'running'
-        }
-        '7': {
-          $default_idmap_service = 'nfs-idmap'
-          $default_idmap_package = 'libnfsidmap'
-          $default_idmapd_service_ensure = 'stopped'
-        }
-        '8': {
-          $default_idmap_service = 'nfs-idmapd'
-          $default_idmap_package = 'libnfsidmap'
-          $default_idmapd_service_ensure = 'stopped'
-        }
-        '9': {
-          $default_idmap_service = 'nfs-idmapd'
-          $default_idmap_package = 'libnfsidmap'
-          $default_idmapd_service_ensure = 'stopped'
-        }
-        default: {
-          fail("idmap only supports EL versions 6, 7, 8 and 9. Detected operatingsystemmajrelease is ${facts['os']['release']['major']}.")
-        }
-      }
-    }
-    'Suse' : {
-      $default_idmap_service    = undef
-      $default_idmap_package    = 'nfsidmap'
-      $default_pipefs_directory = '/var/lib/nfs/rpc_pipefs'
-      $default_idmapd_service_ensure = undef
-    }
-    default: {
-      fail( "idmap only supports RedHat and Suse osfamilies, not ${facts['os']['family']}" )
-    }
-  }
-
-  if $idmap_package == 'USE_DEFAULTS' {
-    $idmap_package_real = $default_idmap_package
-  } else {
-    $idmap_package_real = $idmap_package
-  }
-
-  if $idmapd_service_name == 'USE_DEFAULTS' {
-    $idmapd_service_name_real = $default_idmap_service
-  } else {
-    $idmapd_service_name_real = $idmapd_service_name
-  }
-
-  if $idmapd_service_ensure == 'USE_DEFAULTS' {
-    $idmapd_service_ensure_real = $default_idmapd_service_ensure
-  } else {
+  if $idmapd_service_ensure {
     validate_re($idmapd_service_ensure, '^(stopped)|(running)|(true)|(false)$',
     'for nfs::idmapd::idmapd_service_ensure valid values are stopped, running, true and false')
-    $idmapd_service_ensure_real = $idmapd_service_ensure
   }
 
-  if $pipefs_directory == undef {
-    $pipefs_directory_real = $default_pipefs_directory
-  } else {
-    $pipefs_directory_real = $pipefs_directory
-  }
-
-  package { $idmap_package_real:
+  package { $idmap_package:
     ensure => present,
   }
 
@@ -174,13 +112,13 @@ class nfs::idmap (
     owner   => $idmapd_conf_owner,
     group   => $idmapd_conf_group,
     mode    => $idmapd_conf_mode,
-    require => Package[$idmap_package_real],
+    require => Package[$idmap_package],
   }
 
-  if $facts['os']['family'] == 'RedHat' {
+  if $idmapd_service_name {
     service { 'idmapd_service':
-      ensure     => $idmapd_service_ensure_real,
-      name       => $idmapd_service_name_real,
+      ensure     => $idmapd_service_ensure,
+      name       => $idmapd_service_name,
       enable     => $idmapd_service_enable,
       hasstatus  => $idmapd_service_hasstatus,
       hasrestart => $idmapd_service_hasrestart,

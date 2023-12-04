@@ -1,0 +1,9 @@
+---
+nfs::include_rpcbind: true
+nfs::include_idmap: true
+nfs::nfs_package:
+  - nfs-utils
+
+nfs::idmap::idmap_package: libnfsidmap
+nfs::idmap::idmapd_service_name: nfs-idmapd
+nfs::idmap::idmapd_service_ensure: stopped

@@ -3,8 +3,8 @@
 #
 [General]
 Verbosity = <%= @verbosity %>
-<% if @pipefs_directory_real != nil -%>
-Pipefs-Directory = <%= @pipefs_directory_real %>
+<% if @pipefs_directory != nil -%>
+Pipefs-Directory = <%= @pipefs_directory %>
 <% end %>
 # The following should be set to the local NFSv4 domain name
 # The default is the host's DNS domain name.

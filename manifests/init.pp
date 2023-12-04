@@ -1,5 +1,11 @@
 # @summary Manages NFS
 #
+# @param include_rpcbind
+#   Include rpcbind into catalogue.
+#
+# @param include_idmap
+#   Include nfs::idmap into catalogue.
+#
 # @param hiera_hash
 #   Boolean to use hiera_hash which merges all found instances of
 #   nfs::mounts in Hiera. This is useful for specifying mounts at different
@@ -36,11 +42,13 @@
 #   The mode for the config file.
 #
 class nfs (
+  Boolean                $include_rpcbind    = false,
+  Boolean                $include_idmap      = false,
   Boolean                $hiera_hash         = true,
-  Variant[Array, String] $nfs_package        = 'USE_DEFAULTS',
-  String                 $nfs_service        = 'USE_DEFAULTS',
-  String                 $nfs_service_ensure = 'USE_DEFAULTS',
-  String                 $nfs_service_enable = 'USE_DEFAULTS',
+  Variant[Array, String] $nfs_package        = undef,
+  Optional[String]       $nfs_service        = undef,
+  String                 $nfs_service_ensure = 'stopped',
+  String                 $nfs_service_enable = 'false',
   Variant[Undef, Hash]   $mounts             = undef,
   Boolean                $server             = false,
   Stdlib::Absolutepath   $exports_path       = '/etc/exports',
@@ -48,84 +56,29 @@ class nfs (
   String                 $exports_group      = 'root',
   Pattern[/^[0-7]{4}$/]  $exports_mode       = '0644',
 ) {
-  case $facts['os']['family'] {
-    'RedHat': {
-      $default_nfs_package = ['nfs-utils']
-
-      case $facts['os']['release']['major'] {
-        '6': {
-          require rpcbind
-          include nfs::idmap
-          $default_nfs_service = 'nfs'
-          $default_nfs_service_ensure = 'stopped'
-          $default_nfs_service_enable = false
-        }
-        /7|8|9/: {
-          require rpcbind
-          include nfs::idmap
-          $default_nfs_service = undef
-          $default_nfs_service_ensure = 'stopped'
-          $default_nfs_service_enable = false
-        }
-        default: {
-          fail("nfs module only supports EL 6, 7 and 8 and facts[os][release][major] was detected as <${facts['os']['release']['major']}>.")
-        }
-      }
-    }
-    'Suse' : {
-      if $server == true {
-        fail('This platform is not configured to be an NFS server.')
-      }
-
-      include nfs::idmap
-      $default_idmap_service = 'rpcidmapd'
-
-      case $facts['os']['release']['major'] {
-        '11','12': {
-          $default_nfs_package = ['nfs-client']
-          $default_nfs_service = 'nfs'
-          $default_nfs_service_ensure = 'running'
-          $default_nfs_service_enable = true
-        }
-        default: {
-          fail("nfs module only supports Suse 11 and 12 and facts[os][release][major was detected as <${facts['os']['release']['major']}>.")
-        }
-      }
-    }
-
-    default: {
-      fail("nfs module only supports osfamilies RedHat, Suse, and <${facts['os']['family']}> was detected.")
-    }
+  if $include_rpcbind {
+    include rpcbind
   }
 
-  if $nfs_package == 'USE_DEFAULTS' {
-    $nfs_package_array = $default_nfs_package
-  } else {
-    $nfs_package_array = any2array($nfs_package)
+  if $include_idmap {
+    include nfs::idmap
   }
 
-  if $nfs_service == 'USE_DEFAULTS' {
-    $nfs_service_real = $default_nfs_service
-  } else {
-    $nfs_service_real = $nfs_service
+  if $facts['os']['family'] == 'Suse' and $server == true {
+    fail('This platform is not configured to be an NFS server.')
   }
+
+  $nfs_package_array = any2array($nfs_package)
+
+  $nfs_service_real = $nfs_service
 
   if $server == true {
     $nfs_service_ensure_real = 'running'
     $nfs_service_enable_real = true
   } else {
-    if $nfs_service_ensure == 'USE_DEFAULTS' {
-      $nfs_service_ensure_real = $default_nfs_service_ensure
-    } else {
-      validate_re($nfs_service_ensure, '^(stopped)|(running)$', 'for nfs::nfs_service_ensure valid values are stopped, running')
-      $nfs_service_ensure_real = $nfs_service_ensure
-    }
-
-    if $nfs_service_enable == 'USE_DEFAULTS' {
-      $nfs_service_enable_real = $default_nfs_service_enable
-    } else {
-      $nfs_service_enable_real = $nfs_service_enable
-    }
+    validate_re($nfs_service_ensure, '^(stopped)|(running)$', 'for nfs::nfs_service_ensure valid values are stopped, running')
+    $nfs_service_ensure_real = $nfs_service_ensure
+    $nfs_service_enable_real = $nfs_service_enable
   }
 
   package { $nfs_package_array:
@@ -153,12 +106,12 @@ class nfs (
     $service_require = undef
   }
 
-  if $nfs_service_real {
+  if $nfs_service {
     # Some implmentations of NFS still need to run a service for the client
     # even though the system is not an NFS server.
     service { 'nfs_service':
       ensure     => $nfs_service_ensure_real,
-      name       => $nfs_service_real,
+      name       => $nfs_service,
       enable     => $nfs_service_enable_real,
       hasstatus  => true,
       hasrestart => true,
