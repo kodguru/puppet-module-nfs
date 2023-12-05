@@ -4,7 +4,7 @@ nfs::nfs_package:
   - nfs-client
 nfs::nfs_service: nfs
 nfs::nfs_service_ensure: running
-nfs::nfs_service_enable: 'true'
+nfs::nfs_service_enable: true
 
 nfs::idmap::idmap_package: nfsidmap
 nfs::idmap::pipefs_directory: /var/lib/nfs/rpc_pipefs

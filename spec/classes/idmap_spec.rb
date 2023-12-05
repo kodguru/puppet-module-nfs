@@ -81,9 +81,9 @@ describe 'nfs::idmap' do
             {
               'ensure'     => v[:idmapd_service_ensure],
               'name'       => v[:idmap_service_name],
-              'enable'     => 'true',
-              'hasstatus'  => 'true',
-              'hasrestart' => 'true',
+              'enable'     => true,
+              'hasstatus'  => true,
+              'hasrestart' => true,
               'subscribe'  => 'File[idmapd_conf]',
             },
           )
@@ -145,21 +145,11 @@ describe 'nfs::idmap' do
         it { is_expected.to contain_service('idmapd_service').with_name('idmapd-test') }
       end
 
-      context 'with idmapd_service_ensure specified as valid string <true>' do
-        let(:params) { { idmapd_service_ensure: 'true' } }
-
-        if os == 'RedHat'
-          it { is_expected.to contain_service('idmapd_service').with_ensure('true') }
-        else
-          it { is_expected.not_to contain_service('idmapd_service') }
-        end
-      end
-
       context 'with idmapd_service_enable specified as valid boolean false' do
         let(:params) { { idmapd_service_enable: false } }
 
         if os == 'RedHat'
-          it { is_expected.to contain_service('idmapd_service').with_enable('false') }
+          it { is_expected.to contain_service('idmapd_service').with_enable(false) }
         else
           it { is_expected.not_to contain_service('idmapd_service') }
         end
@@ -169,7 +159,7 @@ describe 'nfs::idmap' do
         let(:params) { { idmapd_service_hasstatus: false } }
 
         if os == 'RedHat'
-          it { is_expected.to contain_service('idmapd_service').with_hasstatus('false') }
+          it { is_expected.to contain_service('idmapd_service').with_hasstatus(false) }
         else
           it { is_expected.not_to contain_service('idmapd_service') }
         end
@@ -263,72 +253,72 @@ describe 'nfs::idmap' do
     mandatory_params = {} if mandatory_params.nil?
 
     validations = {
-      'absolute_path' => {
+      'Stdlib::Absolutepath' => {
         name:    ['idmapd_conf_path', 'pipefs_directory'],
         valid:   ['/absolute/filepath', '/absolute/directory/'],
         invalid: ['../invalid', 3, 2.42, ['array'], { 'ha' => 'sh' }, true, false, nil],
         message: '(expects a match for Variant\[Stdlib::Windowspath|expects a Stdlib::Absolutepath = Variant)', # Puppet 4|5
       },
-      'array/string translation_method' => {
+      'Nfs::Idmap::Translation_method' => {
         name:    ['translation_method'],
-        valid:   ['nsswitch', 'umich_ldap', 'static', ['nsswitch static']],
+        valid:   ['nsswitch', 'umich_ldap', 'static'],
         invalid: ['string', { 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'expects a value of type Array or Pattern',
+        message: 'Pattern\[/^\(nsswitch|umich_ldap|static\)$/\]',
 
       },
-      'boolean' => {
+      'Boolean' => {
         name:    ['idmapd_service_enable', 'idmapd_service_hasstatus', 'idmapd_service_hasrestart'],
         valid:   [true, false],
         invalid: ['true', 'false', ['array'], { 'ha' => 'sh' }, 3, 2.42, nil],
         message: 'expects a Boolean value',
       },
-      'integer' => {
+      'Integer' => {
         name:    ['verbosity'],
         valid:   [3, 242],
         invalid: ['3', ['array'], { 'ha' => 'sh' }, 2.42, true, nil],
-        message: 'Evaluation Error: Error while evaluating a Resource Statement',
+        message: 'expects an Integer value',
       },
-      'string' => {
-        name:    ['idmap_package', 'idmapd_conf_owner', 'idmapd_conf_group', 'idmapd_service_name', 'nobody_user', 'nobody_group'],
+      'Optional[String[1]]' => {
+        name:    ['idmap_package', 'idmapd_service_name'],
+        valid:   ['string', nil],
+        invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true, ''],
+        message: 'type Undef or String',
+      },
+      'String[1]' => {
+        name:    ['idmapd_conf_owner', 'idmapd_conf_group', 'nobody_user', 'nobody_group'],
         valid:   ['string'],
-        invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: '(type Undef or String|expects a String value)',
+        invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true, ''],
+        message: '(expects a String|expects a String\[1\])',
       },
-      'string/array' => {
+      'Nfs::Idmap::Local_realms' => {
         name:    ['local_realms'],
         valid:   ['string', ['array']],
         invalid: [{ 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'expects a value of type String or Array,',
+        message: 'Stdlib::Fqdn',
       },
-      'string for domain' => {
+      'Stdlib::Fqdn' => {
         name:    ['idmap_domain'],
         valid:   ['test.domain'],
         invalid: ['test,domain', ['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: '(expects a String value|is not a valid name)',
+        message: 'Pattern',
       },
-      'string for service ensure' => {
+      'Optional[Stdlib::Fqdn]' => {
+        name:    ['ldap_server'],
+        valid:   ['ldap.domain.tld', nil],
+        invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true],
+        message: 'Pattern',
+      },
+      'Optional[Stdlib::Ensure::Service]' => {
         name:    ['idmapd_service_ensure'],
-        valid:   ['stopped', 'running', 'true', 'false'],
-        invalid: ['string', ['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: '(type Undef or String|valid values are stopped, running, true and false)',
+        valid:   ['stopped', 'running'],
+        invalid: ['string', ['array'], { 'ha' => 'sh' }, 3, 2.42, true, 'true'],
+        message: 'Enum\[\'running\', \'stopped\'\]',
       },
-      'string for mode' => {
+      'Stdlib::Filemode' => {
         name:    ['idmapd_conf_mode'],
         valid:   ['0777', '0644', '0242'],
         invalid: ['0999', ['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'expects a match for Pattern\[\/\^\[0-7\]\{4\}\$\/\]',
-      },
-      'undef/string' => {
-        name:    ['ldap_server'],
-        valid:   ['string'],
-        invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'expects a value of type Undef or String',
-      },
-      'undef/string for domain' => {
-        name:    ['ldap_server'],
-        valid:   ['test.domain'],
-        invalid: ['test,domain', ['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: '(expects a value of type Undef or String|is not a valid name)',
+        message: '[/^[0124]{1}[0-7]{3}$/]',
       },
       'undef/string/array' => {
         name:    ['ldap_base'],

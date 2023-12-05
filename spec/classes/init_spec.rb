@@ -165,12 +165,12 @@ describe 'nfs' do
       context 'with nfs_service_enable specified as valid string <false> and nfs_service is also specified' do
         let(:params) do
           {
-            nfs_service_enable: 'false',
+            nfs_service_enable: false,
             nfs_service:        'nfs-test',
           }
         end
 
-        it { is_expected.to contain_service('nfs_service').with_enable('false') }
+        it { is_expected.to contain_service('nfs_service').with_enable(false) }
       end
 
       context 'with server specified as valid boolean <true>' do
@@ -195,7 +195,7 @@ describe 'nfs' do
               {
                 'command'     => 'exportfs -ra',
                 'path'        => '/bin:/usr/bin:/sbin:/usr/sbin',
-                'refreshonly' => 'true',
+                'refreshonly' => true,
               },
             )
           end
@@ -205,7 +205,7 @@ describe 'nfs' do
               is_expected.to contain_service('nfs_service').with(
                 {
                   'ensure'    => 'running',
-                  'enable'    => 'true',
+                  'enable'    => true,
                 },
               )
             end
@@ -369,53 +369,47 @@ describe 'nfs' do
     mandatory_params = {} if mandatory_params.nil?
 
     validations = {
-      'absolute_path' => {
+      'Stdlib::Absolutepath' => {
         name:    ['exports_path'],
         valid:   ['/absolute/filepath', '/absolute/directory/'],
         invalid: ['../invalid', 3, 2.42, ['array'], { 'ha' => 'sh' }, true, false, nil],
         message: '(expects a match for Variant\[Stdlib::Windowspath|expects a Stdlib::Absolutepath = Variant)', # Puppet 4|5
       },
-      'array/string' => {
+      'Variant[Array[String[1]], String[1]]' => {
         name:    ['nfs_package'],
         valid:   ['string', ['array']],
         invalid: [{ 'ha' => 'sh' }, 3, 2.42, true],
         message: 'expects a value of type Array or String',
       },
-      'boolean' => {
-        name:    ['hiera_hash', 'server'],
+      'Boolean' => {
+        name:    ['include_rpcbind', 'include_idmap', 'hiera_hash', 'nfs_service_enable', 'server'],
         valid:   [true, false],
         invalid: ['true', 'false', ['array'], { 'ha' => 'sh' }, 3, 2.42, nil],
         message: 'expects a Boolean value',
       },
-      'hash' => {
+      'Hash' => {
         name:    ['mounts'],
         valid:   [], # valid hashes are to complex to block test them here. types::mount is_expected.to have its own spec tests anyway.
         invalid: ['string', ['array'], 3, 2.42, true],
         message: 'expects a value of type Undef or Hash',
       },
-      'string' => {
+      'Optional[String[1]]' => {
         name:    ['nfs_service', 'exports_owner', 'exports_group'],
-        valid:   ['string'],
-        invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: '(type Undef or String|expects a String value)',
+        valid:   ['string', nil],
+        invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true, ''],
+        message: '(type Undef or String|expects a String value|expects a String\[1\] value)',
       },
-      'string for service enable' => {
-        name:    ['nfs_service_enable'],
-        valid:   ['true', 'false'], # /!\ removed 'manual' and 'mask' as it requires additinal work on provider features to be set
-        invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'expects a String value',
-      },
-      'string for service ensure' => {
+      'Stdlib::Ensure::Service' => {
         name:    ['nfs_service_ensure'],
         valid:   ['stopped', 'running'],
         invalid: ['string', ['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: '(expects a String value|valid values are stopped, running)',
+        message: 'Enum\[\'running\', \'stopped\'\]',
       },
-      'string for service mode' => {
+      'Stdlib::Filemode' => {
         name:    ['exports_mode'],
         valid:   ['0777', '0644', '0242'],
         invalid: ['0999', ['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'expects a match for Pattern\[\/\^\[0-7\]\{4\}\$\/\]',
+        message: 'Stdlib::Filemode',
       },
     }
 

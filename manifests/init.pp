@@ -42,19 +42,19 @@
 #   The mode for the config file.
 #
 class nfs (
-  Boolean                $include_rpcbind    = false,
-  Boolean                $include_idmap      = false,
-  Boolean                $hiera_hash         = true,
-  Variant[Array, String] $nfs_package        = undef,
-  Optional[String]       $nfs_service        = undef,
-  String                 $nfs_service_ensure = 'stopped',
-  String                 $nfs_service_enable = 'false',
-  Variant[Undef, Hash]   $mounts             = undef,
-  Boolean                $server             = false,
-  Stdlib::Absolutepath   $exports_path       = '/etc/exports',
-  String                 $exports_owner      = 'root',
-  String                 $exports_group      = 'root',
-  Pattern[/^[0-7]{4}$/]  $exports_mode       = '0644',
+  Boolean                              $include_rpcbind    = false,
+  Boolean                              $include_idmap      = false,
+  Boolean                              $hiera_hash         = true,
+  Variant[Array[String[1]], String[1]] $nfs_package        = undef,
+  Optional[String[1]]                  $nfs_service        = undef,
+  Stdlib::Ensure::Service              $nfs_service_ensure = 'stopped',
+  Boolean                              $nfs_service_enable = false,
+  Optional[Hash]                       $mounts             = undef,
+  Boolean                              $server             = false,
+  Stdlib::Absolutepath                 $exports_path       = '/etc/exports',
+  String[1]                            $exports_owner      = 'root',
+  String[1]                            $exports_group      = 'root',
+  Stdlib::Filemode                     $exports_mode       = '0644',
 ) {
   if $include_rpcbind {
     include rpcbind

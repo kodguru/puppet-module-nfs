@@ -61,46 +61,28 @@
 #   String of the directory for rpc_pipefs.
 #
 class nfs::idmap (
-  Optional[String]       $idmap_package             = undef,
-  Stdlib::Absolutepath   $idmapd_conf_path          = '/etc/idmapd.conf',
-  String                 $idmapd_conf_owner         = 'root',
-  String                 $idmapd_conf_group         = 'root',
-  Pattern[/^[0-7]{4}$/]  $idmapd_conf_mode          = '0644',
-  Optional[String]       $idmapd_service_name       = undef,
-  Optional[String]       $idmapd_service_ensure     = undef,
-  Boolean                $idmapd_service_enable     = true,
-  Boolean                $idmapd_service_hasstatus  = true,
-  Boolean                $idmapd_service_hasrestart = true,
+  Optional[String[1]]                   $idmap_package             = undef,
+  Stdlib::Absolutepath                  $idmapd_conf_path          = '/etc/idmapd.conf',
+  String[1]                             $idmapd_conf_owner         = 'root',
+  String[1]                             $idmapd_conf_group         = 'root',
+  Stdlib::Filemode                      $idmapd_conf_mode          = '0644',
+  Optional[String[1]]                   $idmapd_service_name       = undef,
+  Optional[Stdlib::Ensure::Service]     $idmapd_service_ensure     = undef,
+  Boolean                               $idmapd_service_enable     = true,
+  Boolean                               $idmapd_service_hasstatus  = true,
+  Boolean                               $idmapd_service_hasrestart = true,
   # idmapd.conf options
-  String                                $idmap_domain       = $facts['networking']['domain'],
-  Variant[Undef, String]                $ldap_server        = undef,
-  Variant[Undef, String, Array]         $ldap_base          = undef,
-  Variant[String, Array]                $local_realms       = $facts['networking']['domain'],
-  Variant[Array,
-    Pattern[/^(nsswitch|umich_ldap|static)$/]
-  ]                                     $translation_method = 'nsswitch',
-  String                                $nobody_user        = 'nobody',
-  String                                $nobody_group       = 'nobody',
-  Integer                               $verbosity          = 0,
-  Variant[Undef, Stdlib::Absolutepath]  $pipefs_directory   = undef,
+  Stdlib::Fqdn                          $idmap_domain              = $facts['networking']['domain'],
+  Optional[Stdlib::Fqdn]                $ldap_server               = undef,
+  Optional[Variant[String[1], Array[String[1]]]]
+                                        $ldap_base                 = undef,
+  Nfs::Idmap::Local_realms              $local_realms              = $facts['networking']['domain'],
+  Nfs::Idmap::Translation_method        $translation_method        = 'nsswitch',
+  String[1]                             $nobody_user               = 'nobody',
+  String[1]                             $nobody_group              = 'nobody',
+  Integer                               $verbosity                 = 0,
+  Optional[Stdlib::Absolutepath]        $pipefs_directory          = undef,
 ) {
-  $is_idmap_domain_valid = is_domain_name($idmap_domain)
-  if $is_idmap_domain_valid != true {
-    fail("nfs::idmap::idmap_domain parameter, <${idmap_domain}>, is not a valid name.")
-  }
-
-  if $ldap_server != undef {
-    $is_ldap_server_valid = is_domain_name($ldap_server)
-    if $is_ldap_server_valid != true {
-      fail("nfs::idmap::ldap_server parameter, <${ldap_server}>, is not a valid name.")
-    }
-  }
-
-  if $idmapd_service_ensure {
-    validate_re($idmapd_service_ensure, '^(stopped)|(running)|(true)|(false)$',
-    'for nfs::idmapd::idmapd_service_ensure valid values are stopped, running, true and false')
-  }
-
   package { $idmap_package:
     ensure => present,
   }

@@ -11,7 +11,7 @@ fixtures:
       ref: 'v1.7.0'
     stdlib:
       repo: 'https://github.com/puppetlabs/puppetlabs-stdlib.git'
-      ref: '4.16.0'
+      ref: '4.25.0'
     types:
       repo: 'https://github.com/ghoneycutt/puppet-module-types.git'
       ref: 'v1.12.0'
