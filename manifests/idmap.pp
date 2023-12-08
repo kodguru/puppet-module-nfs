@@ -74,8 +74,7 @@ class nfs::idmap (
   # idmapd.conf options
   Stdlib::Fqdn                          $idmap_domain              = $facts['networking']['domain'],
   Optional[Stdlib::Fqdn]                $ldap_server               = undef,
-  Optional[Variant[String[1], Array[String[1]]]]
-                                        $ldap_base                 = undef,
+  Optional[Variant[String[1], Array[String[1]]]] $ldap_base        = undef,
   Nfs::Idmap::Local_realms              $local_realms              = $facts['networking']['domain'],
   Nfs::Idmap::Translation_method        $translation_method        = 'nsswitch',
   String[1]                             $nobody_user               = 'nobody',
