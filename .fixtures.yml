@@ -2,18 +2,13 @@ fixtures:
   repositories:
     common:
       repo: 'https://github.com/ghoneycutt/puppet-module-common.git'
-      ref: 'v1.7.0'
     mount:
       repo: 'https://github.com/puppetlabs/puppetlabs-mount_core.git'
-      ref: '1.0.2'
     rpcbind:
       repo: 'https://github.com/ghoneycutt/puppet-module-rpcbind.git'
-      ref: 'v1.7.0'
     stdlib:
       repo: 'https://github.com/puppetlabs/puppetlabs-stdlib.git'
-      ref: '4.25.0'
     types:
       repo: 'https://github.com/ghoneycutt/puppet-module-types.git'
-      ref: 'v1.12.0'
   symlinks:
     nfs: "#{source_dir}"
