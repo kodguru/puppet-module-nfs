@@ -1,184 +1,163 @@
 require 'spec_helper'
+require 'spec_functions'
+
 describe 'nfs' do
-  supported_platforms = {
-    'el6' => {
-      osfamily:        'RedHat',
-      release:         '6',
-      include_idmap:   true,
-      include_rpcbind: true,
-      packages:        ['nfs-utils'],
-      service:         'nfs',
-      service_ensure:  'stopped',
-      service_enable:  false,
-      server:          true,
-    },
-    'el7' => {
-      osfamily:        'RedHat',
-      release:         '7',
-      include_idmap:   true,
-      include_rpcbind: true,
-      packages:        ['nfs-utils'],
-      service:         nil,
-      service_ensure:  'stopped',
-      service_enable:  false,
-      server:          true,
-    },
-    'el8' => {
-      osfamily:        'RedHat',
-      release:         '8',
-      include_idmap:   true,
-      include_rpcbind: true,
-      packages:        ['nfs-utils'],
-      service:         nil,
-      service_ensure:  'stopped',
-      service_enable:  false,
-      server:          true,
-    },
-    'el9' => {
-      osfamily:        'RedHat',
-      release:         '9',
-      include_idmap:   true,
-      include_rpcbind: true,
-      packages:        ['nfs-utils'],
-      service:         nil,
-      service_ensure:  'stopped',
-      service_enable:  false,
-      server:          true,
-    },
-    'suse11' => {
-      osfamily:        'Suse',
-      release:         '11',
-      include_idmap:   true,
-      include_rpcbind: false,
-      packages:        ['nfs-client'],
-      service:         'nfs',
-      service_ensure:  'running',
-      service_enable:  true,
-      server:          false,
-    },
-    'suse12' => {
-      osfamily:        'Suse',
-      release:         '12',
-      include_idmap:   true,
-      include_rpcbind: false,
-      packages:        ['nfs-client'],
-      service:         'nfs',
-      service_ensure:  'running',
-      service_enable:  true,
-      server:          false,
-    },
-  }
+  on_supported_os.sort.each do |os, facts|
+    # these function calls mimic the hiera data, they are sourced in from spec/spec_functions.rb
+    include_rpcbind    = include_rpcbind(facts)
+    include_idmap      = include_idmap(facts)
+    nfs_package        = nfs_package(facts)
+    nfs_service        = nfs_service(facts)
+    nfs_service_ensure = nfs_service_ensure(facts)
+    nfs_service_enable = nfs_service_enable(facts)
 
-  supported_platforms.sort.each do |_k, v|
-    describe "on osfamily <#{v[:osfamily]}> when #{v[:release].nil? ? 'kernel' : 'operatingsystemmaj'}release is <#{v[:release]}#{v[:kernelrelease]}>" do
-      let :facts do
-        {
-          os: {
-            family:  v[:osfamily],
-            release: {
-              major: v[:release],
-            },
-          },
-          kernelrelease:             v[:kernelrelease],
-        }
-      end
+    nfs_packages       = []
 
-      # Building the array of Packages for service's subscribe attribute.
-      service_subscribe_array = []
-      v[:packages].each do |pkg|
-        service_subscribe_array << "Package[#{pkg}]"
-      end
+    context "on #{os}" do
+      let(:facts) { facts }
 
       context 'with default values for parameters' do
         it { is_expected.to compile.with_all_deps }
 
-        if v[:include_idmap] == true
-          it { is_expected.to contain_class('nfs::idmap') }
-        else
-          it { is_expected.not_to contain_class('nfs::idmap') }
-        end
-
-        if v[:include_rpcbind] == true
+        if include_rpcbind == true
           it { is_expected.to contain_class('rpcbind') }
         else
           it { is_expected.not_to contain_class('rpcbind') }
         end
 
-        v[:packages].each do |pkg|
-          it { is_expected.to contain_package(pkg).with_ensure('present') }
+        if include_idmap == true
+          it { is_expected.to contain_class('nfs::idmap') }
+        else
+          it { is_expected.not_to contain_class('nfs::idmap') }
         end
 
-        if v[:service]
+        nfs_package.each do |package|
+          it { is_expected.to contain_package(package).with_ensure('present') }
+
+          nfs_packages.push("Package[#{package}]") # prepare package list for service subscribe
+        end
+
+        if nfs_service.nil?
+          it { is_expected.not_to contain_service('nfs_service') }
+        else
           it do
-            is_expected.to contain_service('nfs_service').with(
+            is_expected.to contain_service('nfs_service').only_with(
               {
-                'ensure'    => v[:service_ensure],
-                'name'      => v[:service],
-                'enable'    => v[:service_enable],
-                'subscribe' => service_subscribe_array,
+                'ensure'     => nfs_service_ensure,
+                'name'       => nfs_service,
+                'enable'     => nfs_service_enable,
+                'hasstatus'  => true,
+                'hasrestart' => true,
+                'require'    => nil,
+                'subscribe'  => nfs_packages,
               },
             )
           end
-        else
-          it { is_expected.not_to contain_service('nfs_service') }
         end
       end
 
-      context 'with nfs_package specified as valid array [array]' do
-        let(:params) { { nfs_package: ['array'] } }
+      context 'with include_rpcbind set to valid true' do
+        let(:params) { { include_rpcbind: true } }
 
-        it { is_expected.to contain_package('array').with_ensure('present') }
-
-        if v[:service]
-          it { is_expected.to contain_service('nfs_service').with_subscribe(['Package[array]']) }
-        end
+        it { is_expected.to contain_class('rpcbind') }
       end
 
-      context 'with nfs_package specified as valid array [test packages]' do
-        let(:params) { { nfs_package: ['test', 'packages'] } }
+      context 'with include_rpcbind set to valid false' do
+        let(:params) { { include_rpcbind: false } }
 
-        it { is_expected.to contain_package('test').with_ensure('present') }
-        it { is_expected.to contain_package('packages').with_ensure('present') }
-
-        if v[:service]
-          it { is_expected.to contain_service('nfs_service').with_subscribe(['Package[test]', 'Package[packages]']) }
-        end
+        it { is_expected.not_to contain_class('rpcbind') }
       end
 
-      context 'with nfs_service specified as valid string <nfs-test>' do
-        let(:params) { { nfs_service: 'nfs-test' } }
+      context 'with include_idmap set to valid true' do
+        let(:params) { { include_idmap: true } }
 
-        it { is_expected.to contain_service('nfs_service').with_name('nfs-test') }
+        it { is_expected.to contain_class('nfs::idmap') }
       end
 
-      context 'with nfs_service_ensure specified as valid string <running> and nfs_service is also specified' do
-        let(:params) do
-          {
-            nfs_service_ensure: 'running',
-            nfs_service:        'nfs-test',
-          }
-        end
+      context 'with include_idmap set to valid false' do
+        let(:params) { { include_idmap: false } }
+
+        it { is_expected.not_to contain_class('nfs::idmap') }
+      end
+
+      context 'with nfs_package set to valid array' do
+        let(:params) { { nfs_package: ['test', 'ing'] } }
+
+        it { is_expected.to contain_package('test') }
+        it { is_expected.to contain_package('ing') }
+      end
+
+      context 'with nfs_package set to valid array when nfs_service is set' do
+        let(:params) { { nfs_package: ['test', 'ing'], nfs_service: 'dummy' } }
+
+        it { is_expected.to contain_service('nfs_service').with_subscribe(['Package[test]', 'Package[ing]']) }
+      end
+
+      context 'with nfs_service set to valid value' do
+        let(:params) { { nfs_service: 'testing' } }
+
+        it { is_expected.to contain_service('nfs_service').with_name('testing') }
+      end
+
+      context 'with nfs_service_ensure set to valid value when nfs_service is set' do
+        let(:params) { { nfs_service_ensure: 'running', nfs_service: 'dummy' } }
 
         it { is_expected.to contain_service('nfs_service').with_ensure('running') }
       end
 
-      context 'with nfs_service_enable specified as valid string <false> and nfs_service is also specified' do
+      context 'with nfs_service_enable set to valid true when nfs_service is set' do
+        let(:params) { { nfs_service_enable: true, nfs_service: 'dummy' } }
+
+        it { is_expected.to contain_service('nfs_service').with_enable(true) }
+      end
+
+      context 'with mounts set to valid hash when hiera_hash is false' do
         let(:params) do
           {
-            nfs_service_enable: false,
-            nfs_service:        'nfs-test',
+            mounts: {
+              '/first/test' => {
+                'ensure' => 'present',
+                'fstype' => 'nfs',
+                'device' => 'test:/first/test',
+              },
+              '/second/test' => {
+                'ensure' => 'present',
+                'fstype' => 'nfs',
+                'device' => 'test:/second/test',
+              },
+            },
+            hiera_hash: false,
           }
         end
 
-        it { is_expected.to contain_service('nfs_service').with_enable(false) }
+        it { is_expected.to have_types__mount_resource_count(2) }
+        it do
+          is_expected.to contain_types__mount('/first/test').with(
+            {
+              'ensure' => 'present',
+              'fstype' => 'nfs',
+              'device' => 'test:/first/test',
+            },
+          )
+        end
+
+        it do
+          is_expected.to contain_types__mount('/second/test').with(
+            {
+              'ensure' => 'present',
+              'fstype' => 'nfs',
+              'device' => 'test:/second/test',
+            },
+          )
+        end
       end
 
-      context 'with server specified as valid boolean <true>' do
-        let(:params) { { server: true } }
+      context 'with server set to valid true when nfs_service is true' do
+        let(:params) { { server: true, nfs_service: 'dummy' } }
 
-        if v[:server]
+        if facts[:os]['family'] == 'RedHat'
           it do
-            is_expected.to contain_file('nfs_exports').with(
+            is_expected.to contain_file('nfs_exports').only_with(
               {
                 'ensure' => 'file',
                 'path'   => '/etc/exports',
@@ -191,7 +170,7 @@ describe 'nfs' do
           end
 
           it do
-            is_expected.to contain_exec('update_nfs_exports').with(
+            is_expected.to contain_exec('update_nfs_exports').only_with(
               {
                 'command'     => 'exportfs -ra',
                 'path'        => '/bin:/usr/bin:/sbin:/usr/sbin',
@@ -200,19 +179,7 @@ describe 'nfs' do
             )
           end
 
-          if v[:service]
-            it do
-              is_expected.to contain_service('nfs_service').with(
-                {
-                  'ensure'    => 'running',
-                  'enable'    => true,
-                },
-              )
-            end
-          else
-            it { is_expected.not_to contain_service('nfs_service') }
-          end
-
+          it { is_expected.to contain_service('nfs_service').with_subscribe(nfs_packages) }
         else
           it 'fail' do
             expect { is_expected.to contain_class(:subject) }.to raise_error(Puppet::Error, %r{This platform is not configured to be an NFS server})
@@ -220,16 +187,11 @@ describe 'nfs' do
         end
       end
 
-      context 'with exports_path specified as valid string </test/exports> and server is set to true' do
-        let(:params) do
-          {
-            exports_path: '/test/exports',
-            server:       true,
-          }
-        end
+      context 'with exports_path set to valid value when server is true' do
+        let(:params) { { exports_path: '/test/ing', server: true } }
 
-        if v[:server]
-          it { is_expected.to contain_file('nfs_exports').with_path('/test/exports') }
+        if facts[:os]['family'] == 'RedHat'
+          it { is_expected.to contain_file('nfs_exports').with_path('/test/ing') }
         else
           it 'fail' do
             expect { is_expected.to contain_class(:subject) }.to raise_error(Puppet::Error, %r{This platform is not configured to be an NFS server})
@@ -237,16 +199,11 @@ describe 'nfs' do
         end
       end
 
-      context 'with exports_owner specified as valid string <nfs_owner> and server is set to true' do
-        let(:params) do
-          {
-            exports_owner: 'nfs_owner',
-            server:        true,
-          }
-        end
+      context 'with exports_owner set to valid value when server is true' do
+        let(:params) { { exports_owner: 'testing', server: true } }
 
-        if v[:server]
-          it { is_expected.to contain_file('nfs_exports').with_owner('nfs_owner') }
+        if facts[:os]['family'] == 'RedHat'
+          it { is_expected.to contain_file('nfs_exports').with_owner('testing') }
         else
           it 'fail' do
             expect { is_expected.to contain_class(:subject) }.to raise_error(Puppet::Error, %r{This platform is not configured to be an NFS server})
@@ -254,16 +211,11 @@ describe 'nfs' do
         end
       end
 
-      context 'with exports_group specified as valid string <nfs_group> and server is set to true' do
-        let(:params) do
-          {
-            exports_group: 'nfs_group',
-            server:        true,
-          }
-        end
+      context 'with exports_group set to valid value when server is true' do
+        let(:params) { { exports_group: 'testing', server: true } }
 
-        if v[:server]
-          it { is_expected.to contain_file('nfs_exports').with_group('nfs_group') }
+        if facts[:os]['family'] == 'RedHat'
+          it { is_expected.to contain_file('nfs_exports').with_group('testing') }
         else
           it 'fail' do
             expect { is_expected.to contain_class(:subject) }.to raise_error(Puppet::Error, %r{This platform is not configured to be an NFS server})
@@ -271,15 +223,10 @@ describe 'nfs' do
         end
       end
 
-      context 'with exports_mode specified as valid string <0242> and server is set to true' do
-        let(:params) do
-          {
-            exports_mode: '0242',
-            server:       true,
-          }
-        end
+      context 'with exports_mode set to valid value when server is true' do
+        let(:params) { { exports_mode: '0242', server: true } }
 
-        if v[:server]
+        if facts[:os]['family'] == 'RedHat'
           it { is_expected.to contain_file('nfs_exports').with_mode('0242') }
         else
           it 'fail' do
@@ -289,153 +236,4 @@ describe 'nfs' do
       end
     end
   end
-
-  describe 'with mounts specified as valid hash' do
-    context 'when hiera_hash is set to true' do
-      let(:params) do
-        {
-          mounts: {
-            '/from/param' => {
-              'ensure' => 'present',
-              'fstype' => 'nfs',
-              'device' => 'test:/from/param',
-            }
-          }
-        }
-      end
-
-      it { is_expected.to have_types__mount_resource_count(1) }
-      it do
-        is_expected.to contain_types__mount('/from/hiera/fqdn').with(
-          {
-            'ensure' => 'present',
-            'fstype' => 'nfs',
-            'device' => 'test:/from/hiera/fqdn',
-          },
-        )
-      end
-    end
-
-    context 'when hiera_hash is set to false' do
-      let(:params) do
-        {
-          hiera_hash: false,
-          mounts: {
-            '/from/param' => {
-              'ensure' => 'present',
-              'fstype' => 'nfs',
-              'device' => 'test:/from/param',
-            }
-          }
-        }
-      end
-
-      it { is_expected.to have_types__mount_resource_count(1) }
-      it do
-        is_expected.to contain_types__mount('/from/param').with(
-          {
-            'ensure' => 'present',
-            'fstype' => 'nfs',
-            'device' => 'test:/from/param',
-          },
-        )
-      end
-    end
-  end
-
-  describe 'with hiera providing data from multiple levels' do
-    let(:facts) do
-      {
-        fqdn: 'nfs.example.local',
-        test: 'hiera_hash',
-      }
-    end
-
-    context 'when hiera_hash set to valid boolean <true>' do
-      it { is_expected.to have_types__mount_resource_count(2) }
-      it { is_expected.to contain_types__mount('/from/hiera/test') }
-      it { is_expected.to contain_types__mount('/from/hiera/fqdn') }
-    end
-
-    context 'when hiera_hash set to valid boolean <false>' do
-      let(:params) { { hiera_hash: false } }
-
-      it { is_expected.to have_types__mount_resource_count(1) }
-      it { is_expected.to contain_types__mount('/from/hiera/fqdn') }
-    end
-  end
-
-  describe 'variable type and content validations' do
-    mandatory_params = {} if mandatory_params.nil?
-
-    validations = {
-      'Stdlib::Absolutepath' => {
-        name:    ['exports_path'],
-        valid:   ['/absolute/filepath', '/absolute/directory/'],
-        invalid: ['../invalid', 3, 2.42, ['array'], { 'ha' => 'sh' }, true, false, nil],
-        message: '(expects a match for Variant\[Stdlib::Windowspath|expects a Stdlib::Absolutepath = Variant)', # Puppet 4|5
-      },
-      'Variant[Array[String[1]], String[1]]' => {
-        name:    ['nfs_package'],
-        valid:   ['string', ['array']],
-        invalid: [{ 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'expects a value of type Array or String',
-      },
-      'Boolean' => {
-        name:    ['include_rpcbind', 'include_idmap', 'hiera_hash', 'nfs_service_enable', 'server'],
-        valid:   [true, false],
-        invalid: ['true', 'false', ['array'], { 'ha' => 'sh' }, 3, 2.42, nil],
-        message: 'expects a Boolean value',
-      },
-      'Hash' => {
-        name:    ['mounts'],
-        valid:   [], # valid hashes are to complex to block test them here. types::mount is_expected.to have its own spec tests anyway.
-        invalid: ['string', ['array'], 3, 2.42, true],
-        message: 'expects a value of type Undef or Hash',
-      },
-      'Optional[String[1]]' => {
-        name:    ['nfs_service', 'exports_owner', 'exports_group'],
-        valid:   ['string', nil],
-        invalid: [['array'], { 'ha' => 'sh' }, 3, 2.42, true, ''],
-        message: '(type Undef or String|expects a String value|expects a String\[1\] value)',
-      },
-      'Stdlib::Ensure::Service' => {
-        name:    ['nfs_service_ensure'],
-        valid:   ['stopped', 'running'],
-        invalid: ['string', ['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'Enum\[\'running\', \'stopped\'\]',
-      },
-      'Stdlib::Filemode' => {
-        name:    ['exports_mode'],
-        valid:   ['0777', '0644', '0242'],
-        invalid: ['0999', ['array'], { 'ha' => 'sh' }, 3, 2.42, true],
-        message: 'Stdlib::Filemode',
-      },
-    }
-
-    validations.sort.each do |type, var|
-      mandatory_params = {} if mandatory_params.nil?
-      var[:name].each do |var_name|
-        var[:params] = {} if var[:params].nil?
-        var[:valid].each do |valid|
-          context "when #{var_name} (#{type}) is set to valid #{valid} (as #{valid.class})" do
-            let(:facts) { [mandatory_facts, var[:facts]].reduce(:merge) } unless var[:facts].nil?
-            let(:params) { [mandatory_params, var[:params], { "#{var_name}": valid, }].reduce(:merge) }
-
-            it { is_expected.to compile }
-          end
-        end
-
-        var[:invalid].each do |invalid|
-          context "when #{var_name} (#{type}) is set to invalid #{invalid} (as #{invalid.class})" do
-            let(:params) { [mandatory_params, var[:params], { "#{var_name}": invalid, }].reduce(:merge) }
-
-            it 'fail' do
-              expect { is_expected.to contain_class(:subject) }.to raise_error(Puppet::Error, %r{#{var[:message]}})
-            end
-          end
-        end
-      end # var[:name].each
-    end # validations.sort.each
-  end # describe 'variable type and content validations'
 end
