@@ -9,8 +9,8 @@
   "issues_url": "https://github.com/ghoneycutt/puppet-module-nfs/issues",
   "dependencies": [
     {
-      "name": "ghoneycutt/common",
-      "version_requirement": ">= 1.7.0 < 2.0.0"
+      "name": "kodguru/common",
+      "version_requirement": ">= 2.0.0 < 3.0.0"
     },
     {
       "name": "puppetlabs/mount_core",
@@ -21,8 +21,8 @@
       "version_requirement": ">= 1.7.0 < 2.0.0"
     },
     {
-      "name": "ghoneycutt/types",
-      "version_requirement": ">= 1.12.0 < 2.0.0"
+      "name": "kodguru/types",
+      "version_requirement": ">= 2.0.0 < 3.0.0"
     },
     {
       "name": "puppetlabs/stdlib",

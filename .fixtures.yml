@@ -1,7 +1,7 @@
 fixtures:
   repositories:
     common:
-      repo: 'https://github.com/ghoneycutt/puppet-module-common.git'
+      repo: 'https://github.com/kodguru/puppet-module-common.git'
     mount:
       repo: 'https://github.com/puppetlabs/puppetlabs-mount_core.git'
     rpcbind:
@@ -9,6 +9,6 @@ fixtures:
     stdlib:
       repo: 'https://github.com/puppetlabs/puppetlabs-stdlib.git'
     types:
-      repo: 'https://github.com/ghoneycutt/puppet-module-types.git'
+      repo: 'https://github.com/kodguru/puppet-module-types.git'
   symlinks:
     nfs: "#{source_dir}"
