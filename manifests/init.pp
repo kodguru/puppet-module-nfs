@@ -70,8 +70,6 @@ class nfs (
 
   $nfs_package_array = any2array($nfs_package)
 
-  $nfs_service_real = $nfs_service
-
   if $server == true {
     $nfs_service_ensure_real = 'running'
     $nfs_service_enable_real = true
