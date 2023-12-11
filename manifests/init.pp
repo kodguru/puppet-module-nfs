@@ -37,18 +37,18 @@
 #   The mode for the config file.
 #
 class nfs (
-  Boolean                              $include_rpcbind    = false,
-  Boolean                              $include_idmap      = false,
-  Variant[Array[String[1]], String[1]] $nfs_package        = undef,
-  Optional[String[1]]                  $nfs_service        = undef,
-  Stdlib::Ensure::Service              $nfs_service_ensure = 'stopped',
-  Boolean                              $nfs_service_enable = false,
-  Optional[Hash]                       $mounts             = undef,
-  Boolean                              $server             = false,
-  Stdlib::Absolutepath                 $exports_path       = '/etc/exports',
-  String[1]                            $exports_owner      = 'root',
-  String[1]                            $exports_group      = 'root',
-  Stdlib::Filemode                     $exports_mode       = '0644',
+  Boolean                    $include_rpcbind    = false,
+  Boolean                    $include_idmap      = false,
+  Optional[Array[String[1]]] $nfs_package        = undef,
+  Optional[String[1]]        $nfs_service        = undef,
+  Stdlib::Ensure::Service    $nfs_service_ensure = 'stopped',
+  Boolean                    $nfs_service_enable = false,
+  Optional[Hash]             $mounts             = undef,
+  Boolean                    $server             = false,
+  Stdlib::Absolutepath       $exports_path       = '/etc/exports',
+  String[1]                  $exports_owner      = 'root',
+  String[1]                  $exports_group      = 'root',
+  Stdlib::Filemode           $exports_mode       = '0644',
 ) {
   if $include_rpcbind {
     include rpcbind
@@ -62,8 +62,6 @@ class nfs (
     fail('This platform is not configured to be an NFS server.')
   }
 
-  $nfs_package_array = any2array($nfs_package)
-
   if $server == true {
     $nfs_service_ensure_real = 'running'
     $nfs_service_enable_real = true
@@ -72,7 +70,7 @@ class nfs (
     $nfs_service_enable_real = $nfs_service_enable
   }
 
-  package { $nfs_package_array:
+  package { $nfs_package:
     ensure => present,
   }
 
@@ -107,7 +105,7 @@ class nfs (
       hasstatus  => true,
       hasrestart => true,
       require    => $service_require,
-      subscribe  => Package[$nfs_package_array],
+      subscribe  => Package[$nfs_package],
     }
   }
 

@@ -19,11 +19,7 @@ Domain = <%= @idmap_domain %>
 # translated to upper-case.
 # Note that if this value is specified, the local realm name
 # must be included in the list!
-<% if @local_realms.class == Array -%>
 #Local-Realms = <%= @local_realms.join(',').upcase %>
-<% else -%>
-#Local-Realms = <%= @local_realms.upcase %>
-<% end -%>
 
 [Mapping]
 
@@ -38,11 +34,7 @@ Nobody-Group = <%= @nobody_group %>
 # is a dynamically loadable plugin library.
 # New methods may be defined and inserted in the list.
 # The default is "nsswitch".
-<% if @translation_method.class == Array -%>
 Method = <%= @translation_method.join(',') %>
-<% else -%>
-Method = <%= @translation_method %>
-<% end -%>
 
 # Optional.  This is a comma-separated, ordered list of
 # translation methods to be used for translating GSS
@@ -73,11 +65,7 @@ LDAP_server = <%= @ldap_server %>
 <% end -%>
 
 <% if @ldap_base != nil -%>
-<%   if @ldap_base.class == Array -%>
 LDAP_base = <%= @ldap_base.join(',') %>
-<%   else -%>
-LDAP_base = <%= @ldap_base %>
-<%   end -%>
 <% end -%>
 
 #-----------------------------------------------------------#
