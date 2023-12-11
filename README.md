@@ -43,14 +43,6 @@ which can be solved through kernel tuning.
 
 # Parameters #
 
-hiera_hash
-----------
-Boolean to use hiera_hash which merges all found instances of
-nfs::mounts in Hiera. This is useful for specifying mounts at different
-levels of the hierarchy and having them all included in the catalog.
-
-- *Default*: true
-
 nfs_package
 -----------
 Name of the NFS package. May be a string or an array.

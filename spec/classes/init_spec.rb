@@ -111,47 +111,6 @@ describe 'nfs' do
         it { is_expected.to contain_service('nfs_service').with_enable(true) }
       end
 
-      context 'with mounts set to valid hash when hiera_hash is false' do
-        let(:params) do
-          {
-            mounts: {
-              '/first/test' => {
-                'ensure' => 'present',
-                'fstype' => 'nfs',
-                'device' => 'test:/first/test',
-              },
-              '/second/test' => {
-                'ensure' => 'present',
-                'fstype' => 'nfs',
-                'device' => 'test:/second/test',
-              },
-            },
-            hiera_hash: false,
-          }
-        end
-
-        it { is_expected.to have_types__mount_resource_count(2) }
-        it do
-          is_expected.to contain_types__mount('/first/test').with(
-            {
-              'ensure' => 'present',
-              'fstype' => 'nfs',
-              'device' => 'test:/first/test',
-            },
-          )
-        end
-
-        it do
-          is_expected.to contain_types__mount('/second/test').with(
-            {
-              'ensure' => 'present',
-              'fstype' => 'nfs',
-              'device' => 'test:/second/test',
-            },
-          )
-        end
-      end
-
       context 'with server set to valid true when nfs_service is true' do
         let(:params) { { server: true, nfs_service: 'dummy' } }
 

@@ -6,11 +6,6 @@
 # @param include_idmap
 #   Include nfs::idmap into catalogue.
 #
-# @param hiera_hash
-#   Boolean to use hiera_hash which merges all found instances of
-#   nfs::mounts in Hiera. This is useful for specifying mounts at different
-#   levels of the hierarchy and having them all included in the catalog.
-#
 # @param nfs_package
 #   Name of the NFS package. May be a string or an array.
 #
@@ -44,7 +39,6 @@
 class nfs (
   Boolean                              $include_rpcbind    = false,
   Boolean                              $include_idmap      = false,
-  Boolean                              $hiera_hash         = true,
   Variant[Array[String[1]], String[1]] $nfs_package        = undef,
   Optional[String[1]]                  $nfs_service        = undef,
   Stdlib::Ensure::Service              $nfs_service_ensure = 'stopped',
@@ -118,13 +112,7 @@ class nfs (
   }
 
   if $mounts != undef {
-    if $hiera_hash == true {
-      $mounts_real = lookup('nfs::mounts', Hash, 'hash')
-    } else {
-      $mounts_real = $mounts
-    }
-
-    $mounts_real.each |$k,$v| {
+    $mounts.each |$k,$v| {
       ::types::mount { $k:
         * => $v,
       }
