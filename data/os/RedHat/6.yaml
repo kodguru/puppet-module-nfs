@@ -1,6 +1,6 @@
 ---
-nfs::nfs_service: nfs
+nfs::nfs_service: 'nfs'
 
-nfs::idmap::idmap_package: nfs-utils-lib
-nfs::idmap::idmapd_service_name: rpcidmapd
-nfs::idmap::idmapd_service_ensure: running
+nfs::idmap::idmap_package: 'nfs-utils-lib'
+nfs::idmap::idmapd_service_name: 'rpcidmapd'
+nfs::idmap::idmapd_service_ensure: 'running'

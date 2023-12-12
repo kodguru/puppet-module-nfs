@@ -43,17 +43,9 @@ which can be solved through kernel tuning.
 
 # Parameters #
 
-hiera_hash
-----------
-Boolean to use hiera_hash which merges all found instances of
-nfs::mounts in Hiera. This is useful for specifying mounts at different
-levels of the hierarchy and having them all included in the catalog.
-
-- *Default*: true
-
 nfs_package
 -----------
-Name of the NFS package. May be a string or an array.
+Array with the name(s) of the NFS package(s).
 
 - *Default*: Uses system defaults as specified in module
 
@@ -170,14 +162,14 @@ String value of ldap search base.
 
 local_realms
 ------------
-String or array of local kerberos realm names.
-- *Default*: `$::domain`
+Array of local kerberos realm names.
+- *Default*: `[$::domain]`
 
 translation_method
 ------------------
-String or array of mapping method to be used between NFS and local IDs.
+Array of mapping method to be used between NFS and local IDs.
 Valid values is nsswitch, umich_ldap or static.
-- *Default*: 'nsswitch'
+- *Default*: ['nsswitch']
 
 nobody_user
 -----------

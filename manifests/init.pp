@@ -6,11 +6,6 @@
 # @param include_idmap
 #   Include nfs::idmap into catalogue.
 #
-# @param hiera_hash
-#   Boolean to use hiera_hash which merges all found instances of
-#   nfs::mounts in Hiera. This is useful for specifying mounts at different
-#   levels of the hierarchy and having them all included in the catalog.
-#
 # @param nfs_package
 #   Name of the NFS package. May be a string or an array.
 #
@@ -42,19 +37,18 @@
 #   The mode for the config file.
 #
 class nfs (
-  Boolean                              $include_rpcbind    = false,
-  Boolean                              $include_idmap      = false,
-  Boolean                              $hiera_hash         = true,
-  Variant[Array[String[1]], String[1]] $nfs_package        = undef,
-  Optional[String[1]]                  $nfs_service        = undef,
-  Stdlib::Ensure::Service              $nfs_service_ensure = 'stopped',
-  Boolean                              $nfs_service_enable = false,
-  Optional[Hash]                       $mounts             = undef,
-  Boolean                              $server             = false,
-  Stdlib::Absolutepath                 $exports_path       = '/etc/exports',
-  String[1]                            $exports_owner      = 'root',
-  String[1]                            $exports_group      = 'root',
-  Stdlib::Filemode                     $exports_mode       = '0644',
+  Boolean                    $include_rpcbind    = false,
+  Boolean                    $include_idmap      = false,
+  Optional[Array[String[1]]] $nfs_package        = undef,
+  Optional[String[1]]        $nfs_service        = undef,
+  Stdlib::Ensure::Service    $nfs_service_ensure = 'stopped',
+  Boolean                    $nfs_service_enable = false,
+  Optional[Hash]             $mounts             = undef,
+  Boolean                    $server             = false,
+  Stdlib::Absolutepath       $exports_path       = '/etc/exports',
+  String[1]                  $exports_owner      = 'root',
+  String[1]                  $exports_group      = 'root',
+  Stdlib::Filemode           $exports_mode       = '0644',
 ) {
   if $include_rpcbind {
     include rpcbind
@@ -68,10 +62,6 @@ class nfs (
     fail('This platform is not configured to be an NFS server.')
   }
 
-  $nfs_package_array = any2array($nfs_package)
-
-  $nfs_service_real = $nfs_service
-
   if $server == true {
     $nfs_service_ensure_real = 'running'
     $nfs_service_enable_real = true
@@ -80,7 +70,7 @@ class nfs (
     $nfs_service_enable_real = $nfs_service_enable
   }
 
-  package { $nfs_package_array:
+  package { $nfs_package:
     ensure => present,
   }
 
@@ -115,18 +105,12 @@ class nfs (
       hasstatus  => true,
       hasrestart => true,
       require    => $service_require,
-      subscribe  => Package[$nfs_package_array],
+      subscribe  => Package[$nfs_package],
     }
   }
 
   if $mounts != undef {
-    if $hiera_hash == true {
-      $mounts_real = lookup('nfs::mounts', Hash, 'hash')
-    } else {
-      $mounts_real = $mounts
-    }
-
-    $mounts_real.each |$k,$v| {
+    $mounts.each |$k,$v| {
       ::types::mount { $k:
         * => $v,
       }

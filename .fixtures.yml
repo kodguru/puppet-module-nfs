@@ -10,5 +10,3 @@ fixtures:
       repo: 'https://github.com/puppetlabs/puppetlabs-stdlib.git'
     types:
       repo: 'https://github.com/kodguru/puppet-module-types.git'
-  symlinks:
-    nfs: "#{source_dir}"

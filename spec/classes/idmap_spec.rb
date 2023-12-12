@@ -149,7 +149,7 @@ describe 'nfs::idmap' do
         it { is_expected.to contain_file('idmapd_conf').with_content(%r{Method = static}) }
       end
 
-      context 'with translation_method set to valid value' do
+      context 'with translation_method set to valid values' do
         let(:params) { { translation_method: ['static', 'umich_ldap'] } }
 
         it { is_expected.to contain_file('idmapd_conf').with_content(%r{Method = static,umich_ldap}) }
