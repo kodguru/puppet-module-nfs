@@ -1,12 +1,12 @@
 {
-  "name": "ghoneycutt-nfs",
-  "version": "2.4.0",
+  "name": "kodguru-nfs",
+  "version": "3.0.0-forked",
   "author": "ghoneycutt",
   "summary": "Manage NFS",
   "license": "Apache-2.0",
-  "source": "git://github.com/ghoneycutt/puppet-module-nfs.git",
-  "project_page": "https://github.com/ghoneycutt/puppet-module-nfs",
-  "issues_url": "https://github.com/ghoneycutt/puppet-module-nfs/issues",
+  "source": "git://github.com/kodguru/puppet-module-nfs.git",
+  "project_page": "https://github.com/kodguru/puppet-module-nfs",
+  "issues_url": "https://github.com/kodguru/puppet-module-nfs/issues",
   "dependencies": [
     {
       "name": "kodguru/common",
